@@ -1,11 +1,16 @@
 <script lang="ts" context="module">
-  import { writable } from 'svelte/store';
+  import { writable, type Readable } from 'svelte/store';
 
-  const charStore = writable<string[]>([]);
+  const inputStore = writable<string[]>([]);
+  export const addChar = (char: string) => inputStore.update(chars => [...chars, char]);
+  export const removeChar = () => inputStore.update(chars => chars.slice(0, -1));
+  export const clearChars = () => inputStore.set([]);
 
-  export const addChar = (char: string) => charStore.update(chars => [...chars, char]);
-  export const removeChar = () => charStore.update(chars => chars.slice(0, -1));
-  export const clearChars = () => charStore.set([]);
+  export type StateStore = Record<string, LetterParams['type']>;
+  const writableState = writable<StateStore>({});
+  export const stateStore: Readable<StateStore> = { subscribe: writableState.subscribe };
+  export const setState = (key: string, value: LetterParams['type']) => writableState.update(state => ({ ...state, [key]: value }));
+  export const clearState = () => writableState.set({});
 </script>
 
 <script lang="ts">
@@ -20,8 +25,15 @@
   let currentAttempt = 0;
   let guesses: string[][] = Array(totalAttempts).fill([]);
 
+  $: currentAttempt > totalAttempts && stop('You ran out of attempts, better luck tomorrow!');
+
   function checkWord(guess: string) {
-    const array: LetterParams['type'][] = [];
+    const array: LetterParams['type'][] = Array(guess.length);
+
+    if (guess === word) {
+      stop('You won!');
+      return array.fill('correct');
+    }
 
     let wordCheck = word;
     for (let i = 0; i < guess.length; i++) {
@@ -32,18 +44,19 @@
       if (wordCheck.indexOf(letter) === i) result = 'correct';
       wordCheck = wordCheck.replace(letter, '#');
 
-      array.push(result);
+      array[i] = result;
+      if (!(letter in $stateStore)) setState(letter, result);
     }
 
     return array;
   }
 
-  if (browser) document.addEventListener('keydown', ({ key, ctrlKey }) => {
-    if (/^[a-zA-Z]$/.test(key) && $charStore.length < word.length) return addChar(key);
+  const keyboardListener = ({ key, ctrlKey }: KeyboardEvent) => {
+    if (/^[a-zA-Z]$/.test(key) && $inputStore.length < word.length) return addChar(key);
 
     if (key === 'Enter') {
-      if ($charStore.length !== word.length) return;
-      guesses[currentAttempt++] = $charStore;
+      if ($inputStore.length !== word.length) return;
+      guesses[currentAttempt++] = $inputStore;
       clearChars();
     }
 
@@ -51,7 +64,21 @@
       if (ctrlKey) clearChars();
       return removeChar()
     }
-  });
+  }
+
+  function stop(message = 'You lost :(') {
+    document.removeEventListener('keydown', keyboardListener);
+    clearState();
+
+    dispatchEvent(new CustomEvent('stop', {
+      detail: {
+        word,
+        message,
+      }
+    }));
+  }
+
+  if (browser) document.addEventListener('keydown', keyboardListener);
 
   function flip(_: HTMLElement, { duration, i }: { duration: number; i: number }): TransitionConfig {
     return {
@@ -60,20 +87,18 @@
       css: (t) => {
         const eased = linear(t);
 
-        return `
-          scale: ${eased} 1;
-        `
+        return `scale: ${eased} 1;`;
       }
     }
   }
 </script>
 
-{#snippet letter({ letter, type, i }: LetterParams)}
+{#snippet letter({ letter, type, position }: LetterParams)}
   <button
     class="letter {type}"
-    in:flip={{ duration: 300, i }}
+    in:flip={{ duration: 300, i: position }}
     on:click={() => {
-      if (!letter || $charStore.length >= word.length) return;
+      if (!letter || $inputStore.length >= word.length) return;
 
       addChar(letter);
     }}
@@ -88,15 +113,15 @@
     <div class="attempt">
       {#if currentAttempt > line}
         {#each guess as character, i}
-          {@render letter({ letter: character, type: result[i]!, i })}
+          {@render letter({ letter: character, type: result[i]!, position: i })}
         {/each}
       {:else if currentAttempt < line}
         {#each { length: word.length } as _, i}
-          {@render letter({ letter: '', type: 'inactive', i })}
+          {@render letter({ letter: '', type: 'inactive', position: i })}
         {/each}
       {:else}
         {#each { length: word.length } as _, i}
-          {@render letter({ letter: $charStore[i] ?? '', type: 'active', i })}
+          {@render letter({ letter: $inputStore[i] ?? '', type: 'active', position: i })}
         {/each}
       {/if}
     </div>
@@ -104,6 +129,14 @@
 </div>
 
 <style lang="scss">
+  :global(:where(:root)) {
+    --color-correct: hsl(120, 60%, 42%);
+    --color-present: hsl(43, 95%, 52%);
+    --color-absent: hsl(0, 0%, 35%);
+
+    --color-inactive: hsl(0, 0%, 45%);
+  }
+
   .board-wrapper {
     --_letter-size: 4rem;
 
@@ -141,18 +174,17 @@
       --_color-border: hsl(0, 0%, 62%);
     }
     &.inactive {
-      --_color-border: hsl(0, 0%, 45%);
+      --_color-border: var(--color-inactive);
     }
 
     &.correct {
-      --_color-bg: hsl(120, 60%, 42%);
+      --_color-bg: var(--color-correct);
     }
     &.present {
-      --_color-bg: hsl(43, 95%, 52%);
+      --_color-bg: var(--color-present);
     }
     &.absent {
-      --_color-bg: hsl(0, 0%, 50%);
-      --_color-fg: hsl(0, 0%, 13%);
+      --_color-bg: var(--color-absent);
     }
   }
 </style>
