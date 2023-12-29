@@ -15,6 +15,7 @@
 
 <script lang="ts">
   import type { TransitionConfig } from 'svelte/transition';
+  import { createEventDispatcher } from 'svelte';
   import { linear } from 'svelte/easing';
   import { browser } from '$app/environment';
   import type { LetterParams } from './types';
@@ -25,7 +26,9 @@
   let currentAttempt = 0;
   let guesses: string[][] = Array(totalAttempts).fill([]);
 
-  $: currentAttempt > totalAttempts && stop('You ran out of attempts, better luck tomorrow!');
+  const dispatcher = createEventDispatcher();
+
+  $: currentAttempt >= totalAttempts && stop('You ran out of attempts, better luck tomorrow!');
 
   function checkWord(guess: string) {
     const array: LetterParams['type'][] = Array(guess.length);
@@ -70,12 +73,10 @@
     document.removeEventListener('keydown', keyboardListener);
     clearState();
 
-    dispatchEvent(new CustomEvent('stop', {
-      detail: {
-        word,
-        message,
-      }
-    }));
+    dispatcher('stop', {
+      word,
+      message,
+    });
   }
 
   if (browser) document.addEventListener('keydown', keyboardListener);

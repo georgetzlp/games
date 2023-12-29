@@ -1,18 +1,25 @@
-<script>
-  import Board from '$lib/components/worldle/Board.svelte';
-  import Keyboard from '$lib/components/worldle/Keyboard.svelte';
+<script lang="ts">
+  import Modal from '$lib/components/Modal.svelte';
+  import Board from '$lib/components/wordle/Board.svelte';
+  import Keyboard from '$lib/components/wordle/Keyboard.svelte';
 
+  let modalOpen = false;
+  let modalContent: string;
 </script>
 
 <svelte:head>
   <title>Home</title>
-  <meta name="description" content="The game worldle written in Svelte" />
+  <meta name="description" content="The game wordle written in Svelte" />
 </svelte:head>
 
 <section aria-label="Game">
-  <h1>Worldle Clone written in <strong>Svelte</strong></h1>
-  <Board word="amogus" />
+  <h1>Wordle Clone written in <strong>Svelte</strong></h1>
+  <Board word="amogus" on:stop={({ detail }) => {
+    modalContent = detail.message;
+    modalOpen = true;
+  }} />
   <Keyboard />
+  <Modal bind:open={modalOpen} bind:content={modalContent} />
 </section>
 
 <style lang="scss">

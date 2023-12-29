@@ -9,16 +9,9 @@ export type LetterParams = {
 };
 
 export type KeyWithoutString = {
+  name: string,
   size?: number,
-} & ({
-  key: string,
+  icon?: SVGElement | string,
   action?: Function,
-} | {
-  key: string,
-  icon: SVGElement | string,
-} | {
-  icon: SVGElement | string,
-  action: Function,
-});
-
+}
 export type Key = KeyWithoutString | string;
