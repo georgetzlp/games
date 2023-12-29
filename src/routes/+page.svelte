@@ -5,6 +5,11 @@
 
   let modalOpen = false;
   let modalContent: string;
+
+  async function getWord(length: number) {
+    const word = await fetch(`/api/get-word/${length}`).then(res => res.text());
+    return word;
+  }
 </script>
 
 <svelte:head>
@@ -14,10 +19,14 @@
 
 <section aria-label="Game">
   <h1>Wordle Clone written in <strong>Svelte</strong></h1>
-  <Board word="amogus" on:stop={({ detail }) => {
-    modalContent = detail.message;
-    modalOpen = true;
-  }} />
+  {#await getWord(5)}
+    <p>Getting word...</p>
+  {:then word}
+    <Board {word} on:stop={({ detail }) => {
+      modalContent = detail.message;
+      modalOpen = true;
+    }} />
+  {/await}
   <Keyboard />
   <Modal bind:open={modalOpen} bind:content={modalContent} />
 </section>
