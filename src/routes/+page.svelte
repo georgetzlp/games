@@ -2,6 +2,9 @@
   import Modal from '$lib/components/Modal.svelte';
   import Board from '$lib/components/wordle/Board.svelte';
   import Keyboard from '$lib/components/wordle/Keyboard.svelte';
+  import type { PageData } from './$types';
+
+  export let data: PageData;
 
   let modalOpen = false;
   let modalContent: string;
@@ -14,8 +17,8 @@
 
 <section aria-label="Game">
   <h1>Wordle Clone written in <strong>Svelte</strong></h1>
-  <Board word="amogus" on:stop={({ detail }) => {
-    modalContent = detail.message;
+  <Board word={data['word']} on:stop={({ detail }) => {
+    modalContent = detail.message + ' The word was ' + detail.word;
     modalOpen = true;
   }} />
   <Keyboard />
