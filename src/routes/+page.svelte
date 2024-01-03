@@ -30,6 +30,25 @@
     display: grid;
     grid-template-rows: auto 1fr auto;
     justify-items: center;
+    gap: 1rem;
     flex-grow: 1;
+  }
+
+  :global(.board) {
+    padding: var(--_gap);
+    padding-inline-end: calc(var(--_gap) * 2);
+    max-width: clamp(
+      calc(var(--_letter-size) * 5),
+      calc((var(--_letter-size) + var(--_gap)) * 12 + var(--_letter-size) * 0.5),
+      80%
+    );
+
+    max-height: 60dvh;
+    overflow: auto;
+    scroll-snap-type: both proximity;
+
+    :global(.letter) {
+      scroll-snap-align: start;
+    }
   }
 </style>

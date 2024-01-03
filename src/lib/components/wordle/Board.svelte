@@ -108,7 +108,7 @@
   </button>
 {/snippet}
 
-<div class="board-wrapper" style="--attempts: {totalAttempts}; --letters: {word.length};">
+<div class="board" style="--attempts: {totalAttempts}; --letters: {word.length};">
   {#each guesses as guess, line}
     {@const result = checkWord(guess.join(''))}
     <div class="attempt">
@@ -138,12 +138,13 @@
     --color-inactive: hsl(0, 0%, 45%);
   }
 
-  .board-wrapper {
+  .board {
     --_letter-size: 4rem;
+    --_gap: 0.25rem;
 
     display: grid;
     grid-template-rows: repeat(var(--attempts), var(--_letter-size));
-    gap: 0.25rem;
+    gap: var(--_gap);
   }
 
   .attempt {

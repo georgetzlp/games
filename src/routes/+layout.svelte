@@ -12,7 +12,7 @@
   .app {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   main {
@@ -20,8 +20,6 @@
     display: flex;
     flex-direction: column;
     padding: 1rem;
-    width: 100%;
-    max-width: 64rem;
     margin-inline: auto;
   }
 </style>
