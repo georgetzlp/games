@@ -110,14 +110,6 @@
 </div>
 
 <style lang="scss">
-  :global(:where(:root)) {
-    --color-correct: hsl(120, 60%, 42%);
-    --color-present: hsl(43, 95%, 52%);
-    --color-absent: hsl(0, 0%, 35%);
-
-    --color-inactive: hsl(0, 0%, 45%);
-  }
-
   .board {
     --_letter-size: 4rem;
     --_gap: 0.25rem;
@@ -152,8 +144,12 @@
     border-color: var(--_color-border, var(--_color-bg));
 
     &.active {
-      --_color-fg: hsl(0, 0%, 80%);
       --_color-border: hsl(0, 0%, 62%);
+      --_color-fg: var(--_color-border);
+
+      :global(.dark) & {
+        --_color-fg: hsl(0, 0%, 80%);
+      }
     }
     &.inactive {
       --_color-border: var(--color-inactive);

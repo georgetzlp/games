@@ -57,7 +57,7 @@
         {@const meta = key as KeyWithoutString}
         <button
           class="key"
-          style={'size' in meta ? `--size: ${meta.size}` : undefined}
+          style={'size' in meta ? `--_key-size: ${meta.size}` : undefined}
           on:click={() => {
             if ('action' in meta) {
               dispatcher('keypress', meta.name);
@@ -78,6 +78,10 @@
 </div>
 
 <style lang="scss">
+  :where(.keyboard) {
+    --_size: 2em;
+  }
+
   .keyboard {
     display: flex;
     flex-direction: column;
@@ -90,13 +94,14 @@
     gap: inherit;
   }
 
-  button {
+  .key {
     all: unset;
     display: grid;
     place-content: center;
-    height: 2em;
-    aspect-ratio: var(--size, 1) / 1;
-    font-size: 2em;
+    height: var(--_size);
+    flex-shrink: 1;
+    flex-basis: calc(var(--_size) * var(--_key-size, 1));
+    font-size: var(--_size);
     text-transform: uppercase;
     border-radius: 0.25em;
 
@@ -121,6 +126,6 @@
     color: currentColor;
     stroke: currentColor;
     fill: currentColor;
-    width: calc(var(--size, 1) * 1em - 0.5em);
+    width: calc(var(--_key-size, 1) * 1em - 0.5em);
   }
 </style>

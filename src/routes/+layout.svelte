@@ -21,5 +21,6 @@
     flex-direction: column;
     padding: 1rem;
     margin-inline: auto;
+    width: min(100%, 60em);
   }
 </style>
