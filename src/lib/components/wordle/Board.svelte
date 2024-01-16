@@ -6,19 +6,17 @@
   export const removeChar = () => inputStore.update(chars => chars.slice(0, -1));
   export const clearChars = () => inputStore.set([]);
 
-  export type StateStore = Record<string, LetterParams['type']>;
-  const writableState = writable<StateStore>({});
-  export const stateStore: Readable<StateStore> = { subscribe: writableState.subscribe };
-  export const setState = (key: string, value: LetterParams['type']) => writableState.update(state => ({ ...state, [key]: value }));
-  export const clearState = () => writableState.set({});
+  export type LetterStateStore = Record<string, LetterState>;
+  const writableLetterState = writable<LetterStateStore>({});
+  export const letterState: Readable<LetterStateStore> = { subscribe: writableLetterState.subscribe };
+  export const setState = (key: string, value: LetterState) => writableLetterState.update(state => ({ ...state, [key]: value }));
+  export const clearState = () => writableLetterState.set({});
 </script>
 
 <script lang="ts">
-  import type { TransitionConfig } from 'svelte/transition';
-  import { createEventDispatcher } from 'svelte';
-  import { linear } from 'svelte/easing';
   import { browser } from '$app/environment';
-  import type { LetterParams } from './types';
+  import type { LetterState } from './types';
+  import { flip } from './flip';
 
   export let word: string;
   export let totalAttempts = word.length + 1;
@@ -26,29 +24,27 @@
   let currentAttempt = 0;
   let guesses: string[][] = Array(totalAttempts).fill([]);
 
-  const dispatcher = createEventDispatcher();
-
-  $: currentAttempt >= totalAttempts && stop('You ran out of attempts, better luck tomorrow!');
+  $: currentAttempt >= totalAttempts && console.log('you los');
 
   function checkWord(guess: string) {
-    const array: LetterParams['type'][] = Array(guess.length);
+    const array: LetterState[] = Array(guess.length);
 
     if (guess === word) {
-      stop('You won!');
+      console.log('gg');
       return array.fill('correct');
     }
 
     let wordCheck = word;
     for (let i = 0; i < guess.length; i++) {
       const letter = guess[i]!;
-      let result: LetterParams['type'] = 'present';
+      let result: LetterState = 'present';
 
       if (!wordCheck.includes(letter)) result = 'absent';
       if (wordCheck.indexOf(letter) === i) result = 'correct';
       wordCheck = wordCheck.replace(letter, '#');
 
       array[i] = result;
-      if (!(letter in $stateStore)) setState(letter, result);
+      if (!(letter in $letterState)) setState(letter, result);
     }
 
     return array;
@@ -69,29 +65,13 @@
     }
   }
 
-  function stop(message = 'You lost :(') {
-    document.removeEventListener('keydown', keyboardListener);
-    clearState();
-
-    dispatcher('stop', {
-      word,
-      message,
-    });
-  }
-
   if (browser) document.addEventListener('keydown', keyboardListener);
 
-  function flip(_: HTMLElement, { duration, i }: { duration: number; i: number }): TransitionConfig {
-    return {
-      duration,
-      delay: i * 150,
-      css: (t) => {
-        const eased = linear(t);
-
-        return `scale: ${eased} 1;`;
-      }
-    }
-  }
+  type LetterParams = {
+    letter: string,
+    type: LetterState | 'active' | 'inactive',
+    position: number,
+  };
 </script>
 
 {#snippet letter({ letter, type, position }: LetterParams)}
@@ -110,9 +90,9 @@
 
 <div class="board" style="--attempts: {totalAttempts}; --letters: {word.length};">
   {#each guesses as guess, line}
-    {@const result = checkWord(guess.join(''))}
     <div class="attempt">
       {#if currentAttempt > line}
+        {@const result = checkWord(guess.join(''))}
         {#each guess as character, i}
           {@render letter({ letter: character, type: result[i]!, position: i })}
         {/each}

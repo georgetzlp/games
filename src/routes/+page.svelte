@@ -17,10 +17,7 @@
 
 <section aria-label="Game">
   <h1>Wordle Clone written in <strong>Svelte</strong></h1>
-  <Board word={data['word']} on:stop={({ detail }) => {
-    modalContent = detail.message + ' The word was ' + detail.word;
-    modalOpen = true;
-  }} />
+  <Board word={data['word']} />
   <Keyboard />
   <Modal bind:open={modalOpen} bind:content={modalContent} />
 </section>
@@ -37,6 +34,7 @@
   :global(.board) {
     padding: var(--_gap);
     padding-inline-end: calc(var(--_gap) * 2);
+    padding-block-end: calc(var(--_gap) * 2);
     max-width: clamp(
       calc(var(--_letter-size) * 5),
       calc((var(--_letter-size) + var(--_gap)) * 12 + var(--_letter-size) * 0.5),

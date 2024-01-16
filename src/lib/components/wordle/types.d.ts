@@ -1,12 +1,6 @@
-export type LetterParams = {
-  letter: string,
-  type: 'active' |   // the current guess
-        'inactive' | // future
-        'correct' |
-        'present' |
-        'absent',
-  position: number,
-};
+export type LetterState = 'correct' |
+  'present' |
+  'absent';
 
 export type KeyWithoutString = {
   name: string,

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { browser } from '$app/environment';
-  import { clearChars, stateStore } from './Board.svelte';
+  import { clearChars, letterState } from './Board.svelte';
   import type { Key, KeyWithoutString } from './types';
 
   export let simulationElement: Document | HTMLElement | HTMLElement[] | undefined = browser ? document : undefined;
@@ -48,7 +48,7 @@
       {#each line as key}
       {#if typeof key === 'string'}
         <button
-          class="key {$stateStore[key]}"
+          class="key {$letterState[key]}"
           on:click={() => simulateKeyPress(key as string)}
         >
           {key}
