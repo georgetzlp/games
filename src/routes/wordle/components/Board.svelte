@@ -1,36 +1,24 @@
-<script lang="ts" context="module">
-  import { writable, type Readable } from 'svelte/store';
-
-  const inputStore = writable<string[]>([]);
-  export const addChar = (char: string) => inputStore.update(chars => [...chars, char]);
-  export const removeChar = () => inputStore.update(chars => chars.slice(0, -1));
-  export const clearChars = () => inputStore.set([]);
-
-  export type LetterStateStore = Record<string, LetterState>;
-  const writableLetterState = writable<LetterStateStore>({});
-  export const letterState: Readable<LetterStateStore> = { subscribe: writableLetterState.subscribe };
-  export const setState = (key: string, value: LetterState) => writableLetterState.update(state => ({ ...state, [key]: value }));
-  export const clearState = () => writableLetterState.set({});
-</script>
-
 <script lang="ts">
-  import { browser } from '$app/environment';
-  import type { LetterState } from './types';
+  import { createEventDispatcher } from 'svelte';
+  import { browser, dev } from '$app/environment';
+  import type { LetterState, StopState } from './types';
   import { flip } from './flip';
+  import { inputState, letterState, guessState } from './states.svelte';
+
+  const dispatcher = createEventDispatcher<{ stop: StopState }>();
 
   export let word: string;
   export let totalAttempts = word.length + 1;
 
   let currentAttempt = 0;
-  let guesses: string[][] = Array(totalAttempts).fill([]);
 
-  $: currentAttempt >= totalAttempts && console.log('you los');
+  $: currentAttempt >= totalAttempts && stop('loss');
 
   function checkWord(guess: string) {
     const array: LetterState[] = Array(guess.length);
 
     if (guess === word) {
-      console.log('gg');
+      stop('win');
       return array.fill('correct');
     }
 
@@ -44,31 +32,44 @@
       wordCheck = wordCheck.replace(letter, '#');
 
       array[i] = result;
-      if (!(letter in $letterState)) setState(letter, result);
+      if (letterState.get(letter) !== 'correct') {
+        letterState.set(letter, result);
+        console.log(letter, result);
+      }
     }
 
     return array;
   }
 
-  const keyboardListener = ({ key, ctrlKey }: KeyboardEvent) => {
-    if (/^[a-zA-Z]$/.test(key) && $inputStore.length < word.length) return addChar(key);
+  const keyboardListener = ({ key, ctrlKey }: KeyboardEvent): any => {
+    if (/^[a-zA-Z]$/.test(key) && inputState.length < word.length) return inputState.add(key as Letter);
 
     if (key === 'Enter') {
-      if ($inputStore.length !== word.length) return;
-      guesses[currentAttempt++] = $inputStore;
-      clearChars();
+      if (inputState.length !== word.length) return;
+
+      const result = checkWord(inputState.chars.join(''));
+      const letterStates = inputState.chars.map((letter, index) => ({ letter, state: result[index]! }));
+
+      guessState.set(currentAttempt++, letterStates);
+      inputState.clear();
     }
 
     if (key === 'Backspace') {
-      if (ctrlKey) clearChars();
-      return removeChar()
+      if (ctrlKey) inputState.clear();
+      else inputState.remove();
     }
   }
 
   if (browser) document.addEventListener('keydown', keyboardListener);
 
+  function stop(state: StopState) {
+    if (dev) console.log(state);
+    document.removeEventListener('keydown', keyboardListener);
+    dispatcher('stop', state);
+  }
+
   type LetterParams = {
-    letter: string,
+    letter?: Letter | undefined,
     type: LetterState | 'active' | 'inactive',
     position: number,
   };
@@ -81,30 +82,30 @@
     class="letter {type}"
     in:animation|global={{ duration: 300, i: position }}
     on:click={() => {
-      if (!letter || $inputStore.length >= word.length) return;
+      if (!letter || inputState.length >= word.length) return;
 
-      addChar(letter);
+      inputState.add(letter);
     }}
   >
-    {letter}
+    {letter ?? ''}
   </button>
 {/snippet}
 
 <div class="board" style="--attempts: {totalAttempts}; --letters: {word.length};">
-  {#each guesses as guess, line}
+  {#each { length: totalAttempts } as _, line}
+    {@const guess = guessState.get(line) ?? []}
     <div class="attempt">
       {#if currentAttempt > line}
-        {@const result = checkWord(guess.join(''))}
-        {#each guess as character, i}
-          {@render letter({ letter: character, type: result[i]!, position: i })}
+        {#each guess as data, i}
+          {@render letter({ letter: data.letter, type: data.state, position: i })}
         {/each}
       {:else if currentAttempt < line}
         {#each { length: word.length } as _, i}
-          {@render letter({ letter: '', type: 'inactive', position: i })}
+          {@render letter({ type: 'inactive', position: i })}
         {/each}
       {:else}
         {#each { length: word.length } as _, i}
-          {@render letter({ letter: $inputStore[i] ?? '', type: 'active', position: i })}
+          {@render letter({ letter: inputState.chars[i], type: 'active', position: i })}
         {/each}
       {/if}
     </div>

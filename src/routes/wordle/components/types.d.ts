@@ -1,4 +1,5 @@
-export type LetterState = 'correct' |
+export type LetterState =
+  'correct' |
   'present' |
   'absent';
 
@@ -9,3 +10,5 @@ export type KeyWithoutString = {
   action?: Function,
 }
 export type Key = KeyWithoutString | string;
+
+export type StopState = 'win' | 'loss';
