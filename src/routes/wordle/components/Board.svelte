@@ -75,9 +75,11 @@
 </script>
 
 {#snippet letter({ letter, type, position }: LetterParams)}
+  <!-- hacky fix but it works -->
+  {@const animation = type !== 'active' ? flip : () => ({})}
   <button
     class="letter {type}"
-    in:flip={{ duration: 300, i: position }}
+    in:animation|global={{ duration: 300, i: position }}
     on:click={() => {
       if (!letter || $inputStore.length >= word.length) return;
 
