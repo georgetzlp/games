@@ -1,7 +1,25 @@
+<script lang="ts" context="module">
+  import { writable, type Readable } from 'svelte/store';
+  import type { LetterState } from './components/types';
+
+  export type InputStateStore = string[];
+  const inputStore = writable<InputStateStore>([]);
+  export const inputState: Readable<InputStateStore> = { subscribe: inputStore.subscribe };
+  export const addChar = (char: string) => inputStore.update(chars => [...chars, char]);
+  export const removeChar = () => inputStore.update(chars => chars.slice(0, -1));
+  export const clearChars = () => inputStore.set([]);
+
+  export type LetterStateStore = Record<string, LetterState>;
+  const writableLetterState = writable<LetterStateStore>({});
+  export const letterState: Readable<LetterStateStore> = { subscribe: writableLetterState.subscribe };
+  export const setState = (key: string, value: LetterState) => writableLetterState.update(state => ({ ...state, [key]: value }));
+  export const clearState = () => writableLetterState.set({});
+</script>
+
 <script lang="ts">
-  import Modal from '$lib/components/Modal.svelte';
-  import Board from '$lib/components/wordle/Board.svelte';
-  import Keyboard from '$lib/components/wordle/Keyboard.svelte';
+  import Modal from './components/Modal.svelte';
+  import Board from './components/Board.svelte';
+  import Keyboard from './components/Keyboard.svelte';
   import type { PageData } from './$types';
 
   export let data: PageData;

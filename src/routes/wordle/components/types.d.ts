@@ -9,3 +9,5 @@ export type KeyWithoutString = {
   action?: Function,
 }
 export type Key = KeyWithoutString | string;
+
+export type StopState = 'win' | 'loss';

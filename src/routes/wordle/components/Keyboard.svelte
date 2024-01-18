@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { browser } from '$app/environment';
-  import { clearChars, letterState } from './Board.svelte';
+  import { clearChars, letterState } from '../+page.svelte';
   import type { Key, KeyWithoutString } from './types';
 
   export let simulationElement: Document | HTMLElement | HTMLElement[] | undefined = browser ? document : undefined;

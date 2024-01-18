@@ -1,25 +1,22 @@
-<script lang="ts" context="module">
-  import { writable, type Readable } from 'svelte/store';
-
-  const inputStore = writable<string[]>([]);
-  export const addChar = (char: string) => inputStore.update(chars => [...chars, char]);
-  export const removeChar = () => inputStore.update(chars => chars.slice(0, -1));
-  export const clearChars = () => inputStore.set([]);
-
-  export type LetterStateStore = Record<string, LetterState>;
-  const writableLetterState = writable<LetterStateStore>({});
-  export const letterState: Readable<LetterStateStore> = { subscribe: writableLetterState.subscribe };
-  export const setState = (key: string, value: LetterState) => writableLetterState.update(state => ({ ...state, [key]: value }));
-  export const clearState = () => writableLetterState.set({});
-</script>
-
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import { get } from 'svelte/store';
   import { browser } from '$app/environment';
-  import type { LetterState } from './types';
+  import type { LetterState, StopState } from './types';
   import { flip } from './flip';
+  import {
+    addChar,
+    clearChars,
+    inputState,
+    letterState,
+    removeChar,
+    setState,
+  } from '../+page.svelte';
 
   export let word: string;
   export let totalAttempts = word.length + 1;
+
+  const dispatcher = createEventDispatcher<{'stop': StopState}>();
 
   let currentAttempt = 0;
   let guesses: string[][] = Array(totalAttempts).fill([]);
@@ -44,18 +41,18 @@
       wordCheck = wordCheck.replace(letter, '#');
 
       array[i] = result;
-      if (!(letter in $letterState)) setState(letter, result);
+      if (get(letterState)[letter] !== 'correct') setState(letter, result);
     }
 
     return array;
   }
 
   const keyboardListener = ({ key, ctrlKey }: KeyboardEvent) => {
-    if (/^[a-zA-Z]$/.test(key) && $inputStore.length < word.length) return addChar(key);
+    if (/^[a-zA-Z]$/.test(key) && $inputState.length < word.length) return addChar(key);
 
     if (key === 'Enter') {
-      if ($inputStore.length !== word.length) return;
-      guesses[currentAttempt++] = $inputStore;
+      if ($inputState.length !== word.length) return;
+      guesses[currentAttempt++] = $inputState;
       clearChars();
     }
 
@@ -66,6 +63,11 @@
   }
 
   if (browser) document.addEventListener('keydown', keyboardListener);
+
+  function stop(state: StopState) {
+    document.removeEventListener('keydown', keyboardListener);
+    dispatcher('stop', state);
+  }
 
   type LetterParams = {
     letter: string,
@@ -79,7 +81,7 @@
     class="letter {type}"
     in:flip={{ duration: 300, i: position }}
     on:click={() => {
-      if (!letter || $inputStore.length >= word.length) return;
+      if (!letter || $inputState.length >= word.length) return;
 
       addChar(letter);
     }}
@@ -102,7 +104,7 @@
         {/each}
       {:else}
         {#each { length: word.length } as _, i}
-          {@render letter({ letter: $inputStore[i] ?? '', type: 'active', position: i })}
+          {@render letter({ letter: $inputState[i] ?? '', type: 'active', position: i })}
         {/each}
       {/if}
     </div>

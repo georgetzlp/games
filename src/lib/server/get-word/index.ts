@@ -1,6 +1,5 @@
 import { error } from '@sveltejs/kit';
 
-
 export async function getWord(length = 5) {
   const words = await import('./words_alpha.min.json', { with: { type: 'json' } })
     .catch((e) => {
