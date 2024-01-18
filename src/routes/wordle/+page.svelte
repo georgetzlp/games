@@ -23,6 +23,22 @@
 </section>
 
 <style lang="scss">
+  :root {
+    --color-correct: hsl(120, 60%, 42%);
+    --color-present: hsl(43, 95%, 52%);
+    --color-absent: hsl(0, 0%, 64%);
+
+    --color-inactive: hsl(0, 0%, 78%);
+
+    &.dark {
+      --color-correct: hsl(120, 60%, 42%);
+      --color-present: hsl(43, 95%, 52%);
+      --color-absent: hsl(0, 0%, 35%);
+
+      --color-inactive: hsl(0, 0%, 45%);
+    }
+  }
+
   section {
     display: grid;
     grid-template-rows: auto 1fr auto;
