@@ -1,18 +1,25 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { browser, dev } from '$app/environment';
-  import type { LetterState, StopState } from './types';
-  import { flip } from './flip';
-  import { inputState, letterState, guessState } from './states.svelte';
+  import type { TransitionConfig } from 'svelte/transition';
+  import { linear } from 'svelte/easing';
+  import { dev } from '$app/environment';
+  import type { LetterState, GameState, Letter } from './types';
+  import { inputState, letterState, guessState, gameState } from './states.svelte';
 
-  const dispatcher = createEventDispatcher<{ stop: StopState }>();
+  const {
+    word,
+    totalAttempts = word.length + 1,
+    onStateChange = () => {},
+  }: {
+    word: string,
+    totalAttempts?: number,
+    onStateChange?: (state: GameState) => void,
+  } = $props();
 
-  export let word: string;
-  export let totalAttempts = word.length + 1;
+  let currentAttempt = $state(guessState.all.length);
 
-  let currentAttempt = 0;
-
-  $: currentAttempt >= totalAttempts && stop('loss');
+  $effect(() => {
+    if (currentAttempt >= totalAttempts) stop('loss');
+  });
 
   function checkWord(guess: string) {
     const array: LetterState[] = Array(guess.length);
@@ -24,25 +31,22 @@
 
     let wordCheck = word;
     for (let i = 0; i < guess.length; i++) {
-      const letter = guess[i]!;
+      const letter = guess[i] as Letter;
       let result: LetterState = 'present';
 
       if (!wordCheck.includes(letter)) result = 'absent';
-      if (wordCheck.indexOf(letter) === i) result = 'correct';
+      if (result === 'present' && wordCheck.indexOf(letter) === i) result = 'correct';
       wordCheck = wordCheck.replace(letter, '#');
 
       array[i] = result;
-      if (letterState.get(letter) !== 'correct') {
-        letterState.set(letter, result);
-        console.log(letter, result);
-      }
+      if (!letterState.get(letter)) letterState.set(letter, result);
     }
 
     return array;
   }
 
   const keyboardListener = ({ key, ctrlKey }: KeyboardEvent): any => {
-    if (/^[a-zA-Z]$/.test(key) && inputState.length < word.length) return inputState.add(key as Letter);
+    if (/^[a-z]$/i.test(key) && !ctrlKey && inputState.length < word.length) return inputState.add(key.toLowerCase() as Letter);
 
     if (key === 'Enter') {
       if (inputState.length !== word.length) return;
@@ -60,28 +64,47 @@
     }
   }
 
-  if (browser) document.addEventListener('keydown', keyboardListener);
+  $effect(() => {
+    document.addEventListener('keydown', keyboardListener);
 
-  function stop(state: StopState) {
+    return () => document.removeEventListener('keydown', keyboardListener);
+  });
+
+  function stop(state: GameState) {
     if (dev) console.log(state);
     document.removeEventListener('keydown', keyboardListener);
-    dispatcher('stop', state);
+    gameState.value = state;
+    onStateChange(state);
   }
 
-  type LetterParams = {
+  interface LetterParams {
     letter?: Letter | undefined,
     type: LetterState | 'active' | 'inactive',
     position: number,
-  };
+  }
+
+  export function flip(_: HTMLElement, { duration, delay }: { duration: number, delay: number }): TransitionConfig {
+    return {
+      duration,
+      delay,
+      css(t) {
+        const eased = linear(t);
+
+        return `scale: ${eased} 1;`;
+      },
+    };
+  }
 </script>
 
 {#snippet letter({ letter, type, position }: LetterParams)}
-  <!-- hacky fix but it works -->
-  {@const animation = type !== 'active' ? flip : () => ({})}
+  {@const blankFunction = () => ({})}
+  {@const animation = type !== 'active' ? flip : blankFunction}
   <button
     class="letter {type}"
-    in:animation|global={{ duration: 300, i: position }}
-    on:click={() => {
+    in:animation|global={{ duration: 300, delay: position * 150 }}
+    onintrostart={(e) => animation !== blankFunction && e.currentTarget.classList.add('hidden')}
+    onintroend={(e) => e.currentTarget.classList.remove('hidden')}
+    onclick={() => {
       if (!letter || inputState.length >= word.length) return;
 
       inputState.add(letter);
@@ -93,7 +116,7 @@
 
 <div class="board" style="--attempts: {totalAttempts}; --letters: {word.length};">
   {#each { length: totalAttempts } as _, line}
-    {@const guess = guessState.get(line) ?? []}
+    {@const guess = guessState.get(line)!}
     <div class="attempt">
       {#if currentAttempt > line}
         {#each guess as data, i}
@@ -166,6 +189,9 @@
     }
     &.absent {
       --_color-bg: var(--color-absent);
+    }
+    &.hidden {
+      scale: 0 1;
     }
   }
 </style>

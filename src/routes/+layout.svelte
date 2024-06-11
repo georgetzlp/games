@@ -1,5 +1,14 @@
 <script>
+  import { browser } from '$app/environment';
   import './styles.css';
+
+  if (browser) {
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    const root = document.documentElement;
+
+    if (media.matches) root.classList.toggle('dark');
+    media.addEventListener('change', (event) => root.classList.toggle('dark', event.matches));
+  }
 </script>
 
 <div class="app">
@@ -8,7 +17,7 @@
   </main>
 </div>
 
-<style>
+<style lang="scss">
   .app {
     display: flex;
     flex-direction: column;

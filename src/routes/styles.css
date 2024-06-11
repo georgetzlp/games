@@ -1,3 +1,10 @@
+/* Dialog */
+dialog {
+  max-height: unset;
+  max-width: unset;
+  inset: calc(1rem + 3px);
+}
+
 /* Box sizing rules */
 *,
 ::before,

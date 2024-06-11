@@ -4,15 +4,6 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%sveltekit.assets%/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>
-      const media = matchMedia('(prefers-color-scheme: dark)');
-      const root = document.documentElement;
-
-      if (media.matches) root.classList.toggle('dark');
-      media.addEventListener('change', (event) => {
-        root.classList.toggle('dark', event.matches);
-      });
-    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

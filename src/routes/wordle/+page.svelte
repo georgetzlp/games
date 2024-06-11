@@ -1,13 +1,10 @@
 <script lang="ts">
-  import Modal from '$lib/components/Modal.svelte';
+  import Modal from '$lib/Modal.svelte';
   import Board from './components/Board.svelte';
   import Keyboard from './components/Keyboard.svelte';
-  import type { PageData } from './$types';
+  import { gameState } from './components/states.svelte';
 
-  export let data: PageData;
-
-  let modalOpen = false;
-  let modalContent: string;
+  const { data } = $props();
 </script>
 
 <svelte:head>
@@ -18,8 +15,14 @@
 <section aria-label="Game">
   <h1>Wordle Clone written in <strong>Svelte</strong></h1>
   <Board word={data.word} />
+
   <Keyboard />
-  <Modal bind:open={modalOpen} bind:content={modalContent} />
+  <Modal title="GG!" open={gameState.value === 'win'}>
+    <p>You won!</p>
+  </Modal>
+  <Modal title="Better luck next time!" open={gameState.value === 'loss'}>
+    <p>You lost. The word was <strong>{data.word}</strong></p>
+  </Modal>
 </section>
 
 <style lang="scss">
@@ -53,14 +56,14 @@
       max-width: clamp(
         calc(var(--_letter-size) * 5),
         calc((var(--_letter-size) + var(--_gap)) * 12 + var(--_letter-size) * 0.5),
-        80%
+        80%,
       );
 
       max-height: 60dvh;
       overflow: auto;
       scroll-snap-type: both proximity;
 
-      :global(.letter) {
+      > :global(.letter) {
         scroll-snap-align: start;
       }
     }
