@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import type { GameState, Letter, LetterState } from './types';
 
 const session: Storage = browser
-  ? sessionStorage
+  ? localStorage
   // stub for server
   : {
     clear: () => {},
@@ -68,10 +68,12 @@ export const input = {
   get chars() { return inputState; },
   get length() { return inputState.length; },
   add(char: Letter) {
+    if (gameState !== 'playing') return;
     inputState = [...inputState, char];
     session.setItem(`wordle-input-${length}`, JSON.stringify(inputState));
   },
   remove(amount = 1) {
+    if (gameState !== 'playing') return;
     inputState = inputState.slice(0, -amount);
     session.setItem(`wordle-input-${length}`, JSON.stringify(inputState));
   },

@@ -7,18 +7,20 @@
 
   const {
     word,
+    validWords,
     totalAttempts = word.length + 1,
     onStateChange = () => {},
   }: {
     word: string,
-    totalAttempts?: number,
+    validWords?: string[],
+    readonly totalAttempts?: number,
     onStateChange?: (state: GameState) => void,
   } = $props();
 
   let currentAttempt = $state(guessState.all.length);
 
   $effect(() => {
-    if (currentAttempt >= totalAttempts) stop('loss');
+    if (currentAttempt >= totalAttempts && gameState.value === 'playing') stop('loss');
   });
 
   function checkWord(guess: string) {
@@ -50,8 +52,11 @@
 
     if (key === 'Enter') {
       if (inputState.length !== word.length) return;
+      const string = inputState.chars.join('');
 
-      const result = checkWord(inputState.chars.join(''));
+      if (!validWords?.includes(string) && validWords !== undefined) return console.log('invalid word', string);
+
+      const result = checkWord(string);
       const letterStates = inputState.chars.map((letter, index) => ({ letter, state: result[index]! }));
 
       guessState.set(currentAttempt++, letterStates);

@@ -14,7 +14,7 @@
 
 <section aria-label="Game">
   <h1>Wordle Clone written in <strong>Svelte</strong></h1>
-  <Board word={data.word} />
+  <Board word={data.word} validWords={data.validWords} />
 
   <Keyboard />
   <Modal title="GG!" open={gameState.value === 'win'}>
