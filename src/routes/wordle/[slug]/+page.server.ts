@@ -17,15 +17,6 @@ export const load: PageServerLoad = async ({ params }) => {
         throw error(500, e);
       }),
 
-    validWords: await getWords(length)
-      .catch((e) => {
-        if (e instanceof Error) {
-          if (e.message === 'No words found') throw error(404, e.message);
-
-          throw error(500, e.message);
-        }
-
-        throw error(500, e);
-      }),
+    validWords: undefined,
   };
 };

@@ -18,6 +18,7 @@
   } = $props();
 
   let currentAttempt = $state(guessState.all.length);
+  let attempts = new Array<HTMLDivElement>(totalAttempts);
 
   $effect(() => {
     if (currentAttempt >= totalAttempts && gameState.value === 'playing') stop('loss');
@@ -71,6 +72,7 @@
 
   $effect(() => {
     document.addEventListener('keydown', keyboardListener);
+    attempts[currentAttempt]?.scrollIntoView({ inline: 'start', block: 'center' });
 
     return () => document.removeEventListener('keydown', keyboardListener);
   });
@@ -99,6 +101,8 @@
       },
     };
   }
+
+  const revealDelay = 150;
 </script>
 
 {#snippet letter({ letter, type, position }: LetterParams)}
@@ -106,8 +110,13 @@
   {@const animation = type !== 'active' ? flip : blankFunction}
   <button
     class="letter {type}"
-    in:animation|global={{ duration: 300, delay: position * 150 }}
-    onintrostart={(e) => animation !== blankFunction && e.currentTarget.classList.add('hidden')}
+    in:animation|global={{ duration: 300, delay: position * revealDelay }}
+    onintrostart={(e) => {
+      if (animation !== blankFunction) e.currentTarget.classList.add('hidden');
+      setTimeout(() => {
+        e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, position * revealDelay - revealDelay * 1.5);
+    }}
     onintroend={(e) => e.currentTarget.classList.remove('hidden')}
     onclick={() => {
       if (!letter || inputState.length >= word.length) return;
@@ -122,7 +131,7 @@
 <div class="board" style="--attempts: {totalAttempts}; --letters: {word.length};">
   {#each { length: totalAttempts } as _, line}
     {@const guess = guessState.get(line)!}
-    <div class="attempt">
+    <div class="attempt" bind:this={attempts[line]}>
       {#if currentAttempt > line}
         {#each guess as data, i}
           {@render letter({ letter: data.letter, type: data.state, position: i })}
@@ -157,10 +166,12 @@
   }
 
   .letter {
+    appearance: none;
     display: grid;
     place-items: center;
     height: var(--_letter-size);
     aspect-ratio: 1;
+    padding: 0;
     border-radius: 0.125em;
     border-style: solid;
     border-width: 0.125em;
